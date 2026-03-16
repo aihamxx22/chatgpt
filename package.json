@@ -1,7 +1,7 @@
 {
-  "name": "chatgpt-transparent-proxy",
+  "name": "chatgpt-web-proxy",
   "version": "1.0.0",
-  "description": "ÊﬂÌ· ‘›«› ·„Êﬁ⁄ ChatGPT",
+  "description": "Transparent agent for the site ChatGPT",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
