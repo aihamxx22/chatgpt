@@ -1,27 +1,26 @@
-﻿const express = require('express');
+const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 
-// وكيل شفاف - ينقل كل شيء كما هو
+// نقطة فحص الصحة - مهمة جداً للتأكد من عمل الخادم
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', message: 'Proxy is running' });
+});
+
+// الوكيل الشفاف - ينقل كل الطلبات إلى ChatGPT
 app.use('/', createProxyMiddleware({
     target: 'https://chatgpt.com',
     changeOrigin: true,
     followRedirects: true,
     secure: true,
-    // لا تعدل أي شيء في المحتوى
-    selfHandleResponse: false,
-    // انقل كل الهيدرز كما هي
     onProxyReq: (proxyReq, req, res) => {
-        // حافظ على الهيدرز الأصلية
+        // الحفاظ على الهيدرز المهمة
         if (req.headers['user-agent']) {
             proxyReq.setHeader('User-Agent', req.headers['user-agent']);
         }
         if (req.headers['accept']) {
             proxyReq.setHeader('Accept', req.headers['accept']);
-        }
-        if (req.headers['accept-language']) {
-            proxyReq.setHeader('Accept-Language', req.headers['accept-language']);
         }
         if (req.headers['cookie']) {
             proxyReq.setHeader('Cookie', req.headers['cookie']);
@@ -29,15 +28,14 @@ app.use('/', createProxyMiddleware({
         proxyReq.setHeader('Referer', 'https://chatgpt.com/');
         proxyReq.setHeader('Origin', 'https://chatgpt.com');
     },
-    // عالج الأخطاء
     onError: (err, req, res) => {
         console.error('Proxy Error:', err);
-        res.status(500).send('Proxy Error');
+        res.status(500).send('Proxy Error: ' + err.message);
     }
 }));
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`🚀 شفاف Proxy running on port ${PORT}`);
-    console.log(`➡️  افتح: https://your-app.onrender.com`);
+    console.log(`✅ Proxy server running on port ${PORT}`);
+    console.log(`➡️  Open: https://your-app.onrender.com`);
 });
