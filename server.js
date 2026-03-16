@@ -2,45 +2,40 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 
-// زيادة الحد الأقصى
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// وسيط لمعالجة جميع الطلبات
 app.use('*', async (req, res) => {
     try {
-        // بناء URL الهدف
         const targetUrl = 'https://chatgpt.com' + req.originalUrl;
         
         console.log(`Proxying: ${req.method} ${targetUrl}`);
 
-        // هيدرز متصفح حقيقي (Windows + Chrome)
+        // هيدرز متصفح Chrome حقيقي بالكامل
         const headers = {
-            'Accept': req.headers.accept || 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-            'Accept-Language': req.headers['accept-language'] || 'en-US,en;q=0.9',
+            'Accept': req.headers.accept || 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
             'Accept-Encoding': 'gzip, deflate, br',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Referer': 'https://chatgpt.com/',
-            'Origin': 'https://chatgpt.com',
-            'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'Accept-Language': req.headers['accept-language'] || 'en-US,en;q=0.9,ar;q=0.8',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Host': 'chatgpt.com',
+            'Pragma': 'no-cache',
+            'Sec-Ch-Ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
             'Sec-Ch-Ua-Mobile': '?0',
             'Sec-Ch-Ua-Platform': '"Windows"',
             'Sec-Fetch-Dest': 'document',
             'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-Site': 'none',
             'Sec-Fetch-User': '?1',
             'Upgrade-Insecure-Requests': '1',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-            'Connection': 'keep-alive'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'X-Requested-With': 'XMLHttpRequest'
         };
 
-        // نقل الكوكيز إذا وجدت
         if (req.headers.cookie) {
             headers.Cookie = req.headers.cookie;
         }
 
-        // إرسال الطلب
         const response = await axios({
             method: req.method,
             url: targetUrl,
@@ -49,10 +44,12 @@ app.use('*', async (req, res) => {
             responseType: 'arraybuffer',
             maxRedirects: 5,
             validateStatus: false,
-            timeout: 30000
+            timeout: 30000,
+            withCredentials: true,
+            decompress: true
         });
 
-        // إعادة الهيدرز المهمة فقط
+        // إعادة الهيدرز المهمة
         const excludeHeaders = ['content-encoding', 'content-length', 'transfer-encoding', 'connection'];
         Object.entries(response.headers).forEach(([key, value]) => {
             if (!excludeHeaders.includes(key.toLowerCase())) {
@@ -60,7 +57,6 @@ app.use('*', async (req, res) => {
             }
         });
 
-        // إرسال الرد
         res.status(response.status).send(response.data);
         
     } catch (error) {
@@ -69,8 +65,8 @@ app.use('*', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`✅ Proxy running on port ${PORT}`);
-    console.log(`➡️  Open: https://your-app.onrender.com`);
+    console.log(`➡️  Open: https://chatgpt-web-proxy.onrender.com`);
 });
